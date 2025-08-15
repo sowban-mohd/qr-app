@@ -63,7 +63,7 @@ Local Installation
 
     Clone the repository:
 
-git clone https://github.com/your-username/qr-code-scanner.git
+git clone https://github.com/sowban-mohd/qr-app.git
 cd qr-code-scanner
 
     Install dependencies:
