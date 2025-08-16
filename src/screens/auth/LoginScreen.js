@@ -26,14 +26,15 @@ export default function LoginScreen({ navigation }) {
 
     // Attempt login
     setLoading(true);
-    const { error } = await Supabase.auth.signInWithPassword({ email, password });
+    const { error } = await Supabase.auth.signInWithPassword({ email: email.trim(), password: password.trim() });
     setLoading(false);
 
     if (error) {
       Alert.alert('Login Error', error.message);
-    } else {
-      navigation.replace('Home'); // Navigate to home if login is successful
     }
+    // } else {
+    //   navigation.replace('Home'); // Navigate to home if login is successful
+    // }
   };
 
   return (

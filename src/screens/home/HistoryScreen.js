@@ -1,62 +1,65 @@
-import { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, TextInput, Pressable, Alert } from 'react-native';
 import { supabase } from '../../services/Supabase';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import LoadingIndicator from '../components/LoadingIndicator';
+import { setStringAsync } from 'expo-clipboard';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HistoryScreen() {
-  const [scans, setScans] = useState([]); // All scans from DB
-  const [filteredScans, setFilteredScans] = useState([]); // Scans after search filter
-  const [loading, setLoading] = useState(true); // Loading state while fetching
-  const [searchText, setSearchText] = useState(''); // Search input
+  const [scans, setScans] = useState([]);
+  const [filteredScans, setFilteredScans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
 
-  // Fetch scans when screen loads
-  useEffect(() => {
-    fetchScans();
-  }, []);
+  // Fetch scans from Supabase
+  const fetchScans = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('scans')
+      .select('id, text, scanned_at')
+      .order('scanned_at', { ascending: false });
 
-  // Apply search filter whenever search text or scans change
+    if (error) {
+      Alert.alert('Error fetching scans', error.message);
+    } else {
+      setScans(data);
+      setFilteredScans(
+        searchText
+          ? data.filter(scan => scan.text.toLowerCase().includes(searchText.toLowerCase()))
+          : data
+      );
+    }
+    setLoading(false);
+  };
+
+  // Run fetchScans every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchScans();
+    }, [])
+  );
+
+  // Update filtered scans when search text changes
   useEffect(() => {
-    if (searchText === '') {
+    if (searchText.trim() === '') {
       setFilteredScans(scans);
     } else {
       const filtered = scans.filter(scan =>
-        scan.text.toLowerCase().includes(searchText.toLowerCase())
+        scan.text.toLowerCase().includes(searchText.trim().toLowerCase())
       );
       setFilteredScans(filtered);
     }
   }, [searchText, scans]);
 
-  // Get scans from Supabase
-  const fetchScans = async () => {
-    const { data, error } = await supabase
-      .from('scans')
-      .select('id, text, scanned_at')
-      .order('scanned_at', { ascending: false }); // Most recent first
-
-    if (error) {
-      console.error('Error fetching scans:', error.message);
-    } else {
-      setScans(data);
-      setFilteredScans(data); // Initially no filter
-    }
-    setLoading(false);
-  };
-
-  // Show loader while fetching
   if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#4e9cff" />
-      </View>
-    );
+    return <LoadingIndicator />;
   }
 
   return (
     <View style={styles.container}>
-      {/* Page title */}
       <Text style={styles.header}>Scan History</Text>
 
-      {/* Search bar */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#888" style={{ marginRight: 8 }} />
         <TextInput
@@ -67,7 +70,6 @@ export default function HistoryScreen() {
         />
       </View>
 
-      {/* Empty state handling */}
       {scans.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Your scan history is empty.</Text>
@@ -77,17 +79,23 @@ export default function HistoryScreen() {
           <Text style={styles.emptyText}>No results found for "{searchText}".</Text>
         </View>
       ) : (
-        // List of scans
         <FlatList
           data={filteredScans}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.item}>
-              <Text style={styles.title}>{item.text}</Text>
-              <Text style={styles.date}>
-                {new Date(item.scanned_at).toLocaleString()}
-              </Text>
-            </View>
+            <Pressable
+              onLongPress={async () => {
+                await setStringAsync(item.text);
+                Alert.alert('Copied!', 'Text has been copied to clipboard.');
+              }}
+            >
+              <View style={styles.item}>
+                <Text style={styles.title}>{item.text}</Text>
+                <Text style={styles.date}>
+                  {new Date(item.scanned_at).toLocaleString()}
+                </Text>
+              </View>
+            </Pressable>
           )}
         />
       )}

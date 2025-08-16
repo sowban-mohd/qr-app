@@ -31,9 +31,10 @@ export default function ScannerScreen({ navigation }) {
 
     if (error) {
       Alert.alert('Error logging out:', error.message);
-    } else {
-      navigation.replace('Login'); // Go back to login screen after logout
     }
+    // } else {
+    //   navigation.replace('Login'); // Go back to login screen after logout
+    // }
   };
 
   return (

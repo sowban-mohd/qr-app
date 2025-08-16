@@ -26,7 +26,7 @@ export default function SignupScreen({ navigation }) {
 
     // Attempt signup
     setLoading(true);
-    const { error } = await Supabase.auth.signUp({ email, password });
+    const { error } = await Supabase.auth.signUp({ email: email.trim(), password: password.trim() });
     setLoading(false);
 
     if (error) {
