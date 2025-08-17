@@ -47,6 +47,8 @@ ON scans
 FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
+
+
     Find your project credentials:
 
         Project URL: Go to Settings → Data API → Project URL
@@ -64,7 +66,7 @@ Local Installation
     Clone the repository:
 
 git clone https://github.com/sowban-mohd/qr-app.git
-cd qr-code-scanner
+cd qr-app
 
     Install dependencies:
 
